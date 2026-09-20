@@ -19,7 +19,6 @@ emails it to a distribution list.
 - [Troubleshooting](#troubleshooting)
 - [Known limitations](#known-limitations)
 - [Files](#files)
-- [AI-assisted development](#ai-assisted-development)
 
 ## What this is
 
@@ -264,6 +263,4 @@ to raise your subscription's API rate limit.
 | `demo_data.py` | Synthetic dataset for testing without a live account |
 | `run_report.py` | CLI entry point |
 
-## AI-assisted development
 
-This codebase was built with the assistance of Claude (Anthropic).
