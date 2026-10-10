@@ -1,0 +1,61 @@
+Hi team,
+
+Server <SERVER NAME> (Windows Server 2022) is failing CIS Level 1 controls in Qualys. We need evidence from the server to work out whether the hardening is missing or Qualys is reading the wrong place. Please log on with an admin account and collect the items below. Nothing needs to be changed on the server.
+
+1) GPO REPORT (shows which GPOs apply and where they come from)
+Open Command Prompt as Administrator and run:
+  mkdir C:\temp
+  gpresult /h C:\temp\gpresult_<SERVER NAME>.html /f
+Please send the HTML file. It lists every GPO applied to the server, its link location (OU), and which GPO set each setting.
+
+Also run and send the output of:
+  auditpol /get /category:* > C:\temp\auditpol_<SERVER NAME>.txt
+
+2) CHECK THESE FAILING CONTROLS
+For each control in the table below, please fill in the last three columns:
+- Registry value now: open regedit, paste the path into the address bar and note the value (or "not present" if the value or key does not exist).
+- Source GPO: run rsop.msc, find the setting, and note the name in the "Source GPO" column (or "not configured").
+- Screenshot: regedit and rsop.msc for that setting.
+
+Control 1
+- Qualys control ID / CIS ID: <ID>
+- Setting: <setting name>
+- Path Qualys checks: <registry path and value name>
+- Expected value: <value>
+- Registry value now: ______
+- Source GPO (rsop.msc): ______
+
+Control 2
+- Qualys control ID / CIS ID: <ID>
+- Setting: <setting name>
+- Path Qualys checks: <registry path and value name>
+- Expected value: <value>
+- Registry value now: ______
+- Source GPO (rsop.msc): ______
+
+Control 3
+- Qualys control ID / CIS ID: <ID>
+- Setting: <setting name>
+- Path Qualys checks: <registry path and value name>
+- Expected value: <value>
+- Registry value now: ______
+- Source GPO (rsop.msc): ______
+
+Control 4
+- Qualys control ID / CIS ID: <ID>
+- Setting: <setting name>
+- Path Qualys checks: <registry path and value name>
+- Expected value: <value>
+- Registry value now: ______
+- Source GPO (rsop.msc): ______
+
+Note: for user rights (e.g. "Access this computer from the network") and security options there may be no simple registry path. Please check them in secpol.msc instead and screenshot the setting (a lock icon means it comes from a domain GPO).
+
+3) QUALYS AGENT STATUS
+- services.msc: status and startup type of "Qualys Cloud Agent".
+- Copy of the latest log from C:\ProgramData\Qualys\QualysAgent\Log
+
+Please attach everything to this ticket. If anything cannot be collected, just note why.
+
+Thanks,
+<Your name>
