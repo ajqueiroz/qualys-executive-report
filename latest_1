@@ -1,0 +1,82 @@
+Subject: Request: GPO evidence and CIS test servers – Qualys CIS Level 1 failures on Windows Server
+
+Hi team,
+
+Our Windows Servers score about 40% in the Qualys CIS Level 1 compliance scan (Qualys Cloud Agent). We need to find out whether the CIS settings are missing from our GPOs, whether the GPOs are not reaching the servers, or whether Qualys is evaluating incorrectly.
+
+Parts A and B are read-only: nothing is changed. Part C needs test servers and can be raised as a separate change if required.
+Please save all outputs to a single folder and attach them to this ticket. If something cannot be collected, just note why.
+
+Example server: <SERVER NAME> (Windows Server 2022)
+
+------------------------------------------------------------
+PART A – Domain / GPO evidence (AD or GPO administrator)
+Run on a domain controller or a management server with RSAT, in PowerShell as an account with read access to GPOs.
+
+A1. OU of the server:
+  Get-ADComputer <SERVER NAME> | Select-Object DistinguishedName | Out-File C:\temp\A1_server_OU.txt
+
+A2. GPOs that apply to that OU, in precedence order (use the OU from A1):
+  Get-GPInheritance -Target "<OU distinguished name from A1>" | Format-List * | Out-File C:\temp\A2_gpo_inheritance.txt
+  (Get-GPInheritance -Target "<OU distinguished name from A1>").InheritedGpoLinks | Format-Table -AutoSize | Out-File -Append C:\temp\A2_gpo_inheritance.txt
+
+A3. Settings report of all GPOs:
+  Get-GPOReport -All -ReportType Html -Path C:\temp\A3_AllGPOs.html
+
+A4. Effective result for the server, pulled remotely:
+  Get-GPResultantSetOfPolicy -Computer <SERVER NAME> -ReportType Html -Path C:\temp\A4_<SERVER NAME>_rsop.html
+
+A5. Backup of all GPOs (for comparison in Microsoft Policy Analyzer):
+  mkdir C:\temp\A5_GPOBackup
+  Backup-GPO -All -Path C:\temp\A5_GPOBackup
+  Then zip the folder.
+
+A6. Please also answer:
+- Which GPO(s) are meant to harden member servers, and what baseline were they built from (CIS, Microsoft Security Baseline, in-house)? Which version?
+- Do any of them use security filtering or WMI filters? If so, what do the filters target?
+- Is inheritance blocked on any server OU, or are any links disabled or Enforced?
+
+------------------------------------------------------------
+PART B – Evidence from the server itself (Service Desk)
+Log on to <SERVER NAME> with an admin account. Command Prompt as Administrator:
+
+  mkdir C:\temp
+  gpresult /h C:\temp\B1_gpresult_<SERVER NAME>.html /f
+  auditpol /get /category:* > C:\temp\B2_auditpol_<SERVER NAME>.txt
+  secedit /export /cfg C:\temp\B3_secpol_<SERVER NAME>.inf
+  reg export HKLM\SOFTWARE\Policies C:\temp\B4_HKLM_Policies.reg
+  reg export HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies C:\temp\B5_HKLM_CV_Policies.reg
+  reg export HKLM\SYSTEM\CurrentControlSet\Control\Lsa C:\temp\B6_Lsa.reg
+  reg export HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters C:\temp\B7_LanmanServer.reg
+  reg export HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters C:\temp\B8_LanmanWorkstation.reg
+
+B9. For these failing controls (from the Qualys report), screenshot regedit at the path shown and rsop.msc showing the "Source GPO" for the setting:
+  1) <Qualys control ID> – <setting> – <registry path / value name> – expected <value>
+  2) <Qualys control ID> – <setting> – <registry path / value name> – expected <value>
+  3) <Qualys control ID> – <setting> – <registry path / value name> – expected <value>
+  4) <Qualys control ID> – <setting> – <registry path / value name> – expected <value>
+  (For user rights or audit settings, screenshot secpol.msc instead – a lock icon means the value comes from a domain GPO.)
+
+B10. Qualys agent: screenshot of services.msc showing "Qualys Cloud Agent" status/startup type, and a copy of the latest log from C:\ProgramData\Qualys\QualysAgent\Log
+
+------------------------------------------------------------
+PART C – Test servers (Service Desk / server team; change may be required)
+Please build three Windows Server 2022 test servers, domain-joined, with the Qualys Cloud Agent installed (Policy Compliance module activated) and the same Qualys CIS policy as production assigned.
+
+  Server A – placed in the normal production server OU. No other changes.
+  Server B – placed in the normal production server OU. Run the attached hardening script as Administrator, reboot, then run gpupdate /force and wait at least 2 hours.
+  Server C – placed in a new test OU with Block Inheritance enabled. Run the attached hardening script as Administrator and reboot.
+
+Then:
+- Confirm with Get-GPInheritance which GPOs still apply to the test OU (Enforced links and the Default Domain Policy may still apply).
+- Wait for the Qualys agent to complete a compliance collection on all three (check the last collection date in Qualys), or ask the Qualys admin to trigger one.
+- Export the Qualys policy report for servers A, B and C (CSV), and run Part B (B1–B3) on server B.
+
+Please do not apply the script to any production server.
+
+------------------------------------------------------------
+Deliverables checklist
+[ ] A1–A6   [ ] B1–B10   [ ] C: Qualys reports for A, B, C + B1–B3 from server B
+
+Thanks,
+<Your name>
